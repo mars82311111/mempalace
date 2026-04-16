@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from mempalace import MemPalaceMemoryProvider
+from mempalace import MemPalaceMemoryProvider, run_full_backup
 
 
 def cmd_status(provider):
@@ -52,6 +52,12 @@ def main():
 
     episodes = subparsers.add_parser("episodes", help="List recent episodes")
     episodes.add_argument("--limit", type=int, default=10)
+
+    backup = subparsers.add_parser("backup", help="Trigger an incremental cloud backup")
+    backup.add_argument("--files", nargs="*", help="Specific files to back up")
+
+    backup_full = subparsers.add_parser("backup_full", help="Run a full encrypted export and upload to GitHub")
+    backup_full.add_argument("--output", default=None, help="Local export filepath (optional)")
 
     args = parser.parse_args()
 
@@ -101,6 +107,26 @@ def main():
 
     elif args.command == "episodes":
         print(provider.handle_tool_call("mempalace_episodes", {"limit": args.limit}))
+
+    elif args.command == "backup":
+        from mempalace import enqueue_incremental
+        files = args.files or []
+        if not files:
+            base = Path(args.palace)
+            for name in ("knowledge_graph.sqlite3", "episodes.wal.ndjson", "health.json", "config.json", "identity.txt"):
+                p = base / name
+                if p.exists():
+                    files.append(str(p))
+        enqueue_incremental(files)
+        print(json.dumps({"result": "Incremental backup enqueued", "files": files}, indent=2, ensure_ascii=False))
+
+    elif args.command == "backup_full":
+        result = run_full_backup(
+            export_filepath=args.output,
+            palace_path=Path(args.palace),
+            feishu_alert=True,
+        )
+        print(json.dumps(result, indent=2, ensure_ascii=False))
 
     provider.shutdown()
 

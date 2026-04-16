@@ -39,6 +39,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from mempalace._compat import MemoryProvider, tool_error
+from mempalace import backup as _backup
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,7 @@ def _append_episode_wal(entry: Dict[str, Any]) -> None:
         with open(path, "a", encoding="utf-8") as f:
             f.write(line)
     _update_health(last_wal_append_at=datetime.now().isoformat())
+    _backup.enqueue_incremental([str(path)])
 
 
 def _read_wal() -> List[Dict[str, Any]]:
@@ -142,6 +144,7 @@ def _update_health(**kwargs) -> None:
             tmp = path.with_suffix(".tmp")
             tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
             tmp.replace(path)
+            _backup.enqueue_incremental([str(path)])
         except Exception as e:
             logger.debug("Health update failed: %s", e)
 
@@ -677,6 +680,9 @@ def _store_triple_with_inverse(
     t.join(timeout=5)
     if result[0] is None:
         return False, "KG write timed out after 5 seconds"
+    # Trigger incremental backup of the KG file on successful write
+    if result[0] and getattr(result[0], "__getitem__", lambda i: None)(0) is True:
+        _backup.enqueue_incremental([_HERMES_KG])
     return result[0]
 
 # Path to system Python that has mempalace installed
@@ -1741,6 +1747,9 @@ class MemPalaceMemoryProvider(MemoryProvider):
 
         # Start the WAL batcher for this process (singleton, idempotent)
         _start_wal_batcher()
+
+        # Start the cloud backup worker (singleton, idempotent)
+        _backup.start_backup_worker()
 
         # Quick check that the CLI works (skipped in standalone mode to avoid
         # subprocess timeout when python -m mempalace calls initialize()).
@@ -3993,6 +4002,8 @@ class MemPalaceMemoryProvider(MemoryProvider):
         # can complete before the process exits. Prevents zombie subprocesses
         # and un-flushed WAL data.
         _stop_wal_batcher(timeout=10.0)
+        # Gracefully stop the cloud backup worker
+        _backup.stop_backup_worker(timeout=10.0)
         for t in (self._prefetch_thread, self._sync_thread):
             if t and t.is_alive():
                 t.join(timeout=5.0)

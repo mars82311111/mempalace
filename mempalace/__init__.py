@@ -20,6 +20,14 @@ from mempalace.core import (
     _stop_wal_batcher,
     register,
 )
+from mempalace.backup import (
+    run_full_backup,
+    start_backup_worker,
+    stop_backup_worker,
+    enqueue_incremental,
+    BackupQueue,
+    BackupWorker,
+)
 
 __all__ = [
     "MemPalaceMemoryProvider",
@@ -35,6 +43,12 @@ __all__ = [
     "_health_path",
     "_start_wal_batcher",
     "_stop_wal_batcher",
+    "run_full_backup",
+    "start_backup_worker",
+    "stop_backup_worker",
+    "enqueue_incremental",
+    "BackupQueue",
+    "BackupWorker",
 ]
 
 __version__ = "1.1.0"
