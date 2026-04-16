@@ -121,10 +121,22 @@ def main():
         print(json.dumps({"result": "Incremental backup enqueued", "files": files}, indent=2, ensure_ascii=False))
 
     elif args.command == "backup_full":
+        from mempalace import _stop_wal_batcher, _start_wal_batcher, stop_backup_worker, start_backup_worker
+
+        def _stop_all():
+            _stop_wal_batcher(timeout=10.0)
+            stop_backup_worker(timeout=10.0)
+
+        def _start_all():
+            _start_wal_batcher()
+            start_backup_worker()
+
         result = run_full_backup(
             export_filepath=args.output,
             palace_path=Path(args.palace),
             feishu_alert=True,
+            stop_workers_fn=_stop_all,
+            start_workers_fn=_start_all,
         )
         print(json.dumps(result, indent=2, ensure_ascii=False))
 
