@@ -7,7 +7,19 @@ Local-only: no API key, no network calls, all storage on-machine.
 """
 
 from mempalace._compat import MemoryProvider, tool_error
-from mempalace.core import MemPalaceMemoryProvider, _store_triple_with_inverse, register
+from mempalace.core import (
+    MemPalaceMemoryProvider,
+    _store_triple_with_inverse,
+    _bulk_add_episodes_to_chromadb,
+    _read_wal,
+    _truncate_wal,
+    _update_health,
+    _wal_path,
+    _health_path,
+    _start_wal_batcher,
+    _stop_wal_batcher,
+    register,
+)
 
 __all__ = [
     "MemPalaceMemoryProvider",
@@ -15,6 +27,14 @@ __all__ = [
     "register",
     "tool_error",
     "_store_triple_with_inverse",
+    "_bulk_add_episodes_to_chromadb",
+    "_read_wal",
+    "_truncate_wal",
+    "_update_health",
+    "_wal_path",
+    "_health_path",
+    "_start_wal_batcher",
+    "_stop_wal_batcher",
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

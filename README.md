@@ -4,6 +4,12 @@ The highest-scoring AI memory system on GitHub (96.6% LongMemEval R@5).
 
 MemPalace is a **standalone**, local-only memory system for AI agents. It stores verbatim text in ChromaDB and maintains a temporal Knowledge Graph in SQLite. No API keys, no network calls — everything stays on your machine.
 
+## What's New in v1.1.0
+
+- **WAL Crash-Safe Architecture**: All episodic writes first append to an atomic NDJSON WAL file (<1ms), then flush to ChromaDB asynchronously in batches. If your process crashes, un-flushed entries are automatically replayed on the next startup — **zero data loss**.
+- **Real-time User Message Persistence**: User input is persisted immediately before assistant generation starts.
+- **Built-in CLI**: `python -m mempalace` gives you direct access to search, add drawers, run KG queries, consolidation and reflection without writing code.
+
 ## Features
 
 - **7-Layer Memory Architecture**
@@ -25,6 +31,25 @@ git clone https://github.com/mars82311111/mempalace.git
 cd mempalace
 pip install -e .
 ```
+
+### CLI Usage
+
+```bash
+# Check palace status
+python -m mempalace status
+
+# Store a fact
+python -m mempalace add_drawer "The user prefers dark mode." --wing facts --room preferences
+
+# Search
+python -m mempalace search "dark mode preference"
+
+# Run maintenance (consolidation + reflection)
+python -m mempalace consolidate
+python -m mempalace reflect --fix
+```
+
+### Python Usage
 
 ```python
 from mempalace import MemPalaceMemoryProvider
