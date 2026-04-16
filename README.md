@@ -49,6 +49,26 @@ python -m mempalace consolidate
 python -m mempalace reflect --fix
 ```
 
+### Cloud Backup (Encrypted)
+
+MemPalace automatically backs up your memory to a **private GitHub repo** with AES-256 encryption.
+
+```bash
+# Trigger an incremental backup manually
+python -m mempalace backup
+
+# Run a full encrypted export + upload now
+python -m mempalace backup_full
+```
+
+**Prerequisites**
+- `gh auth login` (GitHub CLI must be authenticated)
+- The encryption key is automatically stored in your macOS Keychain on first run.
+- Feishu alerts are sent if backups fail (optional; requires `FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_HOME_CHANNEL` env vars).
+
+**Automation**
+If you use the included `com.mempalace.maintenance.plist` (macOS launchd), a full backup runs automatically every night after consolidation.
+
 ### Python Usage
 
 ```python
